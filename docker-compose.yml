@@ -1,46 +1,62 @@
-version: '1'
+# Версия формата docker-compose
+version: '3.8'
 
+# Определение всех сервисов
 services:
+  # Frontend-сервис (например, React)
   frontend:
+    # Сборка из Dockerfile в текущей директории
     build: ./frontend
+    # Проброс портов: хост:контейнер
     ports:
       - "3000:3000"
+    # Переменные окружения
     environment:
       - REACT_APP_API_URL=http://backend:8080
-    networks:
-      - network-app
+    # Зависимости - запустится только после backend
     depends_on:
       - backend
+    # Подключение к сети app-network
+    networks:
+      - app-network
+
+  # Backend-сервис (например, Node.js)
   backend:
     build: ./backend
     ports:
       - "8080:8080"
     environment:
-      - DB_HOST=db 
+      - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_NAME=mydb 
+      - DB_NAME=mydb
     depends_on:
       - db
     networks:
-      - network-app
+      - app-network
+
+  # База данных PostgreSQL
   db:
+    # Официальный образ Postgres
     image: postgres:15-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/postgres_data
+      # Сохранение данных БД после перезапуска
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=mydb
     ports:
       - "5432:5432"
     networks:
-      - network-app
+      - app-network
 
+# Определение томов для постоянного хранения данных
 volumes:
   postgres_data:
 
+# Создание внутренней сети для связи между сервисами
 networks:
-  network-app:
+  app-network:
     driver: bridge
